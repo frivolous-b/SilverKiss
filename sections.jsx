@@ -95,6 +95,7 @@ function Collections() {
             <span className="col-num">{pad2(i)}</span>
             <span className="col-name">{c.name}</span>
             <span className="col-meta">{c.meta} <span className="arrow">→</span></span>
+            <img className="col-thumb" src={c.img} alt={c.name} loading="lazy" decoding="async" />
           </div>
         ))}
       </div>
@@ -112,6 +113,23 @@ function Catalog() {
   const [filter, setFilter] = useState(0);
   const filters = C.catalog.filters;
   const products = C.catalog.products;
+  const gridRef = useRef(null);
+
+  // touch devices have no hover -> spin each card once when it scrolls into view
+  useEffect(() => {
+    if (document.documentElement.classList.contains('reduced')) return;
+    const touch = window.matchMedia('(hover: none)').matches;
+    if (!touch || !gridRef.current) return;
+    const cards = gridRef.current.querySelectorAll('.cat-card');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add('spin'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.35 });
+    cards.forEach((c) => io.observe(c));
+    return () => io.disconnect();
+  }, []);
+
   return (
     <section className="section catalog" id="catalog" data-screen-label="Каталог">
       <SectionHead num="02" kicker={C.catalog.kicker} />
@@ -120,7 +138,7 @@ function Catalog() {
           <button key={i} className={`pill ${filter === i ? 'is-active' : ''}`} onClick={() => setFilter(i)}>{f}</button>
         ))}
       </div>
-      <div className="cat-grid">
+      <div className="cat-grid" ref={gridRef}>
         {products.map((p, i) => (
           <div className={`cat-card ${p.span || 'span-4'}`} key={i} data-reveal>
             <div className={`cat-media ${p.ar || 'ar-port'}`}>

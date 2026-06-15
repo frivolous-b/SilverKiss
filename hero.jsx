@@ -1,6 +1,18 @@
 /* SILVER KISS — Hero (approved mechanic, now hands off to native scroll) */
 (function () {
-const { useRef, useEffect } = React;
+const { useRef, useEffect, useState } = React;
+
+// nav label -> section id (sections carry these ids in sections.jsx)
+const NAV_TARGET = {
+  'Колекции': 'collections', 'Каталог': 'catalog', 'Материали': 'materials',
+  'За нас': 'manifest', 'Контакт': 'contact',
+};
+function navGo(label) {
+  window.dispatchEvent(new CustomEvent('sk:unlock'));   // release the hero gesture-lock
+  const id = NAV_TARGET[label];
+  const el = id ? document.getElementById(id) : null;
+  if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 70);
+}
 
 const WHEEL_FACTOR = 0.0006;
 const TOUCH_FACTOR = 0.0055;
@@ -25,6 +37,8 @@ function Mark() {
 }
 
 function Header() {
+  const [open, setOpen] = useState(false);
+  const handle = (label) => { setOpen(false); navGo(label); };
   return (
     <header className="header">
       <div className="brand">
@@ -36,9 +50,21 @@ function Header() {
       </div>
       <nav className="nav">
         {C.nav.map((label, i) => (
-          <button className="pill" key={i}>{label}</button>
+          <button className="pill" key={i} onClick={() => handle(label)}>{label}</button>
         ))}
       </nav>
+      <button
+        className={`burger ${open ? 'is-open' : ''}`}
+        aria-label="Меню" aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span></span><span></span><span></span>
+      </button>
+      <div className={`mobile-menu ${open ? 'open' : ''}`}>
+        {C.nav.map((label, i) => (
+          <button className="mm-item" key={i} onClick={() => handle(label)}>{label}</button>
+        ))}
+      </div>
     </header>
   );
 }
@@ -203,8 +229,17 @@ function Hero() {
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('mousemove', onMouseMove);
 
+    // nav / menu can force the hero to its revealed state and release scrolling
+    const onUnlock = () => {
+      target.current = 1; current.current = 1;
+      applyMask(1); tl.progress(1);
+      setLocked(false);
+    };
+    window.addEventListener('sk:unlock', onUnlock);
+
     return () => {
       cancelAnimationFrame(raf);
+      window.removeEventListener('sk:unlock', onUnlock);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);

@@ -235,17 +235,65 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
   color: rgba(255,255,255,0.6); margin-top: 3px;
 }
 .nav { display: flex; align-items: center; gap: 8px; }
+
+/* mobile menu (hidden on desktop) */
+.burger { display: none; }
+.mobile-menu { display: none; }
+.col-thumb { display: none; }
 @media (max-width: 1080px) {
   .nav .pill { padding: 9px 14px; font-size: 10px; letter-spacing: 0.16em; }
   .brand-tag { display: none; }
 }
 @media (max-width: 720px) {
   .nav { display: none; }
+  .header { padding: 15px 18px; align-items: center; }
+
+  /* hero title: lift clear of the mobile browser toolbar so it stays visible */
+  .title-wrap { bottom: calc(8vh + env(safe-area-inset-bottom, 0px)); }
+  h1.hero-title { font-size: clamp(38px, 12.5vw, 82px); }
+
   /* mobile scroll hint: discreet but clearly visible */
-  .hint { gap: 14px; top: 60%; mix-blend-mode: normal; }
+  .hint { gap: 14px; top: 56%; mix-blend-mode: normal; }
   .hint-label { font-size: 16px; letter-spacing: 0.18em; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
   .hint-track { height: 58px; }
   .hint-arrow { width: 32px; height: 32px; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.8)); }
+
+  /* hamburger */
+  .burger {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 44px; height: 44px; padding: 12px;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 50%; cursor: pointer; pointer-events: auto;
+    position: relative; z-index: 61;   /* stays above the menu overlay */
+    -webkit-tap-highlight-color: transparent;
+  }
+  .burger span { display: block; height: 1.5px; width: 100%; background: #fff; transition: transform .3s ease, opacity .25s ease; }
+  .burger.is-open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .burger.is-open span:nth-child(2) { opacity: 0; }
+  .burger.is-open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* full-screen menu */
+  .mobile-menu {
+    display: flex; position: fixed; inset: 0; z-index: 59;
+    flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(0,0,0,0.97); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity .35s ease;
+  }
+  .mobile-menu.open { opacity: 1; pointer-events: auto; }
+  .mm-item {
+    appearance: none; background: none; border: none; color: #fff; cursor: pointer;
+    font-family: 'Michroma', sans-serif; text-transform: uppercase;
+    font-size: 7.5vw; letter-spacing: 0.02em; padding: 13px 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* collections: hover-preview doesn't exist on touch -> inline thumbnail per row */
+  .col-row { flex-wrap: wrap; align-items: center; }
+  .col-thumb {
+    display: block; width: 100%; height: 160px; object-fit: cover;
+    margin-top: 14px; order: 5;
+    filter: saturate(0.92) contrast(1.05) brightness(0.95);
+  }
 }
 
 .hint {
@@ -414,6 +462,7 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
   display: flex; align-items: center; justify-content: center;
 }
 .cat-card:hover .ph-inner { transform: rotateY(360deg); }
+.cat-card.spin .ph-inner { transform: rotateY(360deg); }   /* touch: triggered on scroll-in */
 .cat-card .cat-price-slide {
   position: absolute; left: 0; right: 0; bottom: 0;
   padding: 14px 16px;
