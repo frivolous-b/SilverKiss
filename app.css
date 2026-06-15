@@ -254,7 +254,7 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
 
   /* mobile scroll hint: discreet but clearly visible */
   .hint { gap: 14px; top: 56%; mix-blend-mode: normal; }
-  .hint-label { font-size: 16px; letter-spacing: 0.18em; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
+  .hint-label { font-size: 15px; letter-spacing: 0.16em; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,0.8); white-space: nowrap; }
   .hint-track { height: 58px; }
   .hint-arrow { width: 32px; height: 32px; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.8)); }
 
