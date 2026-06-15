@@ -242,9 +242,10 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
 @media (max-width: 720px) {
   .nav { display: none; }
   /* mobile scroll hint: discreet but clearly visible */
-  .hint { gap: 14px; top: 58%; }
-  .hint-label { font-size: 15px; letter-spacing: 0.2em; }
-  .hint-track { height: 66px; }
+  .hint { gap: 14px; top: 60%; mix-blend-mode: normal; }
+  .hint-label { font-size: 16px; letter-spacing: 0.18em; color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,0.8); }
+  .hint-track { height: 58px; }
+  .hint-arrow { width: 32px; height: 32px; filter: drop-shadow(0 2px 10px rgba(0,0,0,0.8)); }
 }
 
 .hint {
@@ -270,6 +271,8 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
   animation: drift 1.8s cubic-bezier(.6,0,.4,1) infinite;
 }
 @keyframes drift { 0% { transform: translateY(-100%);} 100% { transform: translateY(250%);} }
+.hint-arrow { width: 24px; height: 24px; color: #fff; animation: arrowbob 1.6s ease-in-out infinite; }
+@keyframes arrowbob { 0%,100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(7px); opacity: 1; } }
 
 .progress {
   position: fixed;
@@ -585,7 +588,7 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .hint, .hint-track::after, .hint-label { animation: none; }
+  .hint, .hint-track::after, .hint-label, .hint-arrow { animation: none; }
   .marquee { animation: none; }
   .accent .accent-media, .accent .accent-media .ph-inner { animation: none; }
   .cat-card, .cat-card:hover { transform: none; }

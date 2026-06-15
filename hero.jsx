@@ -3,7 +3,7 @@
 const { useRef, useEffect } = React;
 
 const WHEEL_FACTOR = 0.0006;
-const TOUCH_FACTOR = 0.0032;
+const TOUCH_FACTOR = 0.0055;
 const LERP = 0.08;
 const PARALLAX = 40;           // px, ±
 
@@ -242,6 +242,9 @@ function Hero() {
       <div className="hint" ref={hintRef}>
         <div className="hint-label">{C.hero.hint}</div>
         <div className="hint-track"></div>
+        <svg className="hint-arrow" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
       <div className="progress" ref={progRef}>000</div>
     </div>
