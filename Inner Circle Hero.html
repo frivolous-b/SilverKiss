@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MERIDIAN — Inner Circle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Michroma&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+<style>
+  :root {
+    --feather: 18; /* percent — soft luminous wipe edge; set to 0 for a hard cut */
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;            /* no native scrolling */
+    overscroll-behavior: none;
+    background: #000;
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #root { height: 100%; width: 100%; }
+
+  .stage {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    overflow: hidden;
+    cursor: ns-resize;
+  }
+
+  /* ---- image frame (centered, 80% of viewport) ---- */
+  .frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80vw;
+    height: 80vh;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+  .layer {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+  .layer-base   { z-index: 10; background-image: url('assets/base.jpg'); }
+  .layer-reveal {
+    z-index: 30;
+    background-image: url('assets/reveal.png');
+    will-change: -webkit-mask-image, mask-image;
+  }
+
+  /* ---- giant title (between base and reveal) ---- */
+  .title-wrap {
+    position: absolute;
+    left: 50%;
+    bottom: -1.2vh;
+    transform: translateX(-50%);
+    z-index: 20;
+    width: 104vw;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+  }
+  h1.title {
+    font-family: 'Michroma', sans-serif;
+    font-weight: 400;
+    color: #fff;
+    line-height: 0.82;
+    font-size: 13.6vw;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  h1.title .char {
+    display: inline-block;
+    will-change: transform, opacity;
+  }
+  h1.title .space { display: inline-block; width: 0.18em; }
+
+  /* ---- header ---- */
+  .header {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 28px 34px;
+    pointer-events: none;
+  }
+  .header > * { pointer-events: auto; }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 42ch;
+  }
+  .brand svg { flex: none; display: block; }
+  .brand-text { line-height: 1.2; }
+  .brand-name {
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+  }
+  .brand-tag {
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+    margin-top: 3px;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pill {
+    appearance: none;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.32);
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.28s ease, color 0.28s ease, border-color 0.28s ease;
+  }
+  .pill:hover {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+
+  /* ---- scroll hint ---- */
+  .hint {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    mix-blend-mode: difference;
+  }
+  .hint-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .hint-track {
+    width: 1px;
+    height: 46px;
+    background: rgba(255,255,255,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .hint-track::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 40%;
+    background: #fff;
+    animation: drift 1.8s cubic-bezier(.6,0,.4,1) infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translateY(-100%); }
+    100% { transform: translateY(250%); }
+  }
+
+  /* progress readout */
+  .progress {
+    position: absolute;
+    bottom: 26px; right: 34px;
+    z-index: 41;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    color: rgba(255,255,255,0.5);
+    font-variant-numeric: tabular-nums;
+    mix-blend-mode: difference;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hint, .hint-track::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useRef, useEffect, useState } = React;
+
+const FEATHER = 18;            // percent — soft luminous wipe edge
+const WHEEL_FACTOR = 0.0006;
+const TOUCH_FACTOR = 0.0015;
+const LERP = 0.08;
+const PARALLAX = 40;           // px, ±
+const TITLE = "INNER CIRCLE";
+
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// Ring / inner-circle brand mark
+function Mark() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+      <circle cx="15" cy="15" r="14" stroke="#fff" strokeWidth="1.1" opacity="0.55" />
+      <circle cx="15" cy="15" r="7.5" stroke="#fff" strokeWidth="1.1" />
+      <circle cx="15" cy="15" r="1.7" fill="#fff" />
+    </svg>
+  );
+}
+
+function Hero() {
+  const frameRef  = useRef(null);
+  const revealRef = useRef(null);
+  const charRefs  = useRef([]);
+  const hintRef   = useRef(null);
+  const progRef   = useRef(null);
+  const tlRef     = useRef(null);
+
+  // motion state held in refs (no re-render on every frame)
+  const target   = useRef(0);   // raw accumulated scroll target 0..1
+  const current  = useRef(0);   // smoothed scroll progress 0..1
+  const mTarget  = useRef({ x: 0, y: 0 });
+  const mCurrent = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Build the title fall timeline once (scrubbed by scrollProgress)
+    const tl = gsap.timeline({ paused: true });
+    tl.to(charRefs.current, {
+      opacity: 0,
+      yPercent: 300,
+      scaleY: 1.2,
+      scaleX: 0.9,
+      stagger: 0.03,
+      ease: 'power2.inOut',
+    });
+    tlRef.current = tl;
+
+    const applyMask = (p) => {
+      const edge = p * (100 + FEATHER);
+      const lo = Math.max(0, edge - FEATHER);
+      const grad = `linear-gradient(to top, #000 ${lo}%, rgba(0,0,0,0) ${Math.max(lo, edge)}%)`;
+      const el = revealRef.current;
+      if (el) { el.style.webkitMaskImage = grad; el.style.maskImage = grad; }
+    };
+
+    applyMask(0); // start fully hidden before first frame
+
+    // ---------- reduced motion: render final state, no loop ----------
+    if (reduced) {
+      target.current = 1; current.current = 1;
+      applyMask(1);
+      tl.progress(1);
+      if (hintRef.current) hintRef.current.style.opacity = '0';
+      if (progRef.current) progRef.current.textContent = '100';
+      return;
+    }
+
+    let raf;
+    const tick = () => {
+      // double-lerp: scroll progress + parallax both eased
+      current.current = lerp(current.current, target.current, LERP);
+      mCurrent.current.x = lerp(mCurrent.current.x, mTarget.current.x, LERP);
+      mCurrent.current.y = lerp(mCurrent.current.y, mTarget.current.y, LERP);
+
+      const p = current.current;
+      applyMask(p);
+      tl.progress(p);
+
+      if (frameRef.current) {
+        frameRef.current.style.transform =
+          `translate(calc(-50% + ${mCurrent.current.x}px), calc(-50% + ${mCurrent.current.y}px))`;
+      }
+      if (hintRef.current) hintRef.current.style.opacity = String(clamp01(1 - p * 6));
+      if (progRef.current) progRef.current.textContent = String(Math.round(p * 100)).padStart(3, '0');
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    // ---------- gesture controllers ----------
+    const onWheel = (e) => {
+      e.preventDefault();
+      target.current = clamp01(target.current + e.deltaY * WHEEL_FACTOR);
+    };
+    let lastTouch = null;
+    const onTouchStart = (e) => { lastTouch = e.touches[0].clientY; };
+    const onTouchMove = (e) => {
+      if (lastTouch === null) return;
+      const y = e.touches[0].clientY;
+      const dy = lastTouch - y;        // swipe up => progress up
+      lastTouch = y;
+      target.current = clamp01(target.current + dy * TOUCH_FACTOR);
+      e.preventDefault();
+    };
+    const onTouchEnd = () => { lastTouch = null; };
+
+    const onMouseMove = (e) => {
+      const nx = e.clientX / window.innerWidth - 0.5;
+      const ny = e.clientY / window.innerHeight - 0.5;
+      mTarget.current.x = nx * PARALLAX;
+      mTarget.current.y = ny * PARALLAX;
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('mousemove', onMouseMove);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('mousemove', onMouseMove);
+      tl.kill();
+    };
+  }, []);
+
+  // split title into char spans
+  const chars = [];
+  let ci = 0;
+  for (let i = 0; i < TITLE.length; i++) {
+    const c = TITLE[i];
+    if (c === ' ') {
+      chars.push(<span key={i} className="space" aria-hidden="true"></span>);
+    } else {
+      const idx = ci++;
+      chars.push(
+        <span
+          key={i}
+          className="char"
+          aria-hidden="true"
+          ref={(el) => { if (el) charRefs.current[idx] = el; }}
+        >{c}</span>
+      );
+    }
+  }
+
+  return (
+    <div className="stage">
+      <div className="frame" ref={frameRef}>
+        <div className="layer layer-base"></div>
+        <div className="layer layer-reveal" ref={revealRef}></div>
+      </div>
+
+      <div className="title-wrap">
+        <h1 className="title" aria-label={TITLE}>{chars}</h1>
+      </div>
+
+      <header className="header">
+        <div className="brand">
+          <Mark />
+          <div className="brand-text">
+            <div className="brand-name">Meridian</div>
+            <div className="brand-tag">Full Workflow Automation for Modern Creative Teams</div>
+          </div>
+        </div>
+        <nav className="nav">
+          <button className="pill">Work</button>
+          <button className="pill">Studio</button>
+          <button className="pill">Contact</button>
+        </nav>
+      </header>
+
+      <div className="hint" ref={hintRef}>
+        <div className="hint-label">Scroll to reveal</div>
+        <div className="hint-track"></div>
+      </div>
+
+      <div className="progress" ref={progRef}>000</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Hero />);
+</script>
+</body>
+</html>

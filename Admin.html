@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SILVER KISS — Админ панел</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Michroma&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="content.js"></script>
+<style>
+  :root {
+    --bg: #000;
+    --panel: #0a0a0a;
+    --panel-2: #0f0f0f;
+    --line: rgba(255,255,255,0.12);
+    --line-soft: rgba(255,255,255,0.07);
+    --fg: #fff;
+    --muted: rgba(255,255,255,0.55);
+    --faint: rgba(255,255,255,0.34);
+    --accent: #fff;
+    --ease: cubic-bezier(.6,0,.2,1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Manrope', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #fff; color: #000; }
+  input, textarea, select, button { font-family: inherit; }
+  a { color: inherit; }
+
+  /* ---------- gate ---------- */
+  .gate {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: #000;
+  }
+  .gate-box { width: min(92vw, 380px); text-align: center; }
+  .gate-mark { display: flex; justify-content: center; margin-bottom: 26px; }
+  .gate h1 {
+    font-family: 'Michroma', sans-serif; font-weight: 400;
+    font-size: 22px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .gate .sub { color: var(--muted); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 32px; }
+  .gate input {
+    width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--faint);
+    color: #fff; font-size: 16px; padding: 14px 4px; outline: none; text-align: center;
+    letter-spacing: 0.18em; transition: border-color .3s var(--ease);
+  }
+  .gate input:focus { border-color: #fff; }
+  .gate.err input { border-color: #e2576b; animation: shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+  .gate .hint { margin-top: 20px; color: var(--faint); font-size: 11px; letter-spacing: 0.08em; }
+  .gate .btn { margin-top: 26px; }
+
+  /* ---------- shell ---------- */
+  .shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+  .side {
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+    position: sticky; top: 0; height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  .side-head { padding: 24px 22px 20px; border-bottom: 1px solid var(--line-soft); }
+  .side-brand { display: flex; align-items: center; gap: 11px; }
+  .side-brand .nm { font-weight: 800; letter-spacing: 0.26em; font-size: 13px; text-transform: uppercase; }
+  .side-brand .tg { font-size: 9.5px; letter-spacing: 0.14em; color: var(--faint); text-transform: uppercase; margin-top: 2px; }
+  .menu { padding: 14px 12px; overflow-y: auto; flex: 1; }
+  .menu button {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: transparent; border: none; color: var(--muted);
+    padding: 11px 14px; border-radius: 10px; cursor: pointer; text-align: left;
+    font-size: 13px; letter-spacing: 0.04em; transition: background .2s var(--ease), color .2s var(--ease);
+  }
+  .menu button .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0; transition: opacity .2s; }
+  .menu button:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .menu button.active { color: #000; background: #fff; font-weight: 700; }
+  .menu button.active .dot { opacity: 1; }
+  .side-foot { padding: 16px; border-top: 1px solid var(--line-soft); }
+
+  /* ---------- main ---------- */
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 30px; border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,0.82); backdrop-filter: blur(10px);
+  }
+  .topbar .ttl { font-family: 'Michroma', sans-serif; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .topbar .ttl .dirty { color: #e6b25a; margin-left: 10px; font-family: 'Manrope'; font-size: 11px; letter-spacing: 0.1em; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+  .btn {
+    appearance: none; cursor: pointer;
+    background: transparent; border: 1px solid var(--faint); color: #fff;
+    font-weight: 600; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 9px 16px; border-radius: 999px;
+    transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease), opacity .2s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #fff; color: #000; border-color: #fff; }
+  .btn.solid { background: #fff; color: #000; border-color: #fff; }
+  .btn.solid:hover { opacity: 0.86; }
+  .btn.ghost { border-color: var(--line); color: var(--muted); }
+  .btn.ghost:hover { color: #fff; background: rgba(255,255,255,0.06); border-color: var(--faint); }
+  .btn.danger:hover { background: #e2576b; border-color: #e2576b; color: #fff; }
+  .btn.sm { padding: 6px 11px; font-size: 10px; letter-spacing: 0.1em; }
+
+  .body { padding: 34px 30px 90px; max-width: 1040px; width: 100%; }
+  .lead { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 30px; max-width: 64ch; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 16px; padding: 22px; margin-bottom: 18px;
+  }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card-h .ix { font-family: 'Michroma'; font-size: 12px; color: var(--faint); }
+  .card-h .nm { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label { display: block; font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .field input[type=text], .field input[type=url], .field textarea {
+    width: 100%; background: var(--panel-2); border: 1px solid var(--line);
+    color: #fff; font-size: 14px; padding: 11px 13px; border-radius: 9px; outline: none;
+    transition: border-color .2s var(--ease); line-height: 1.5;
+  }
+  .field input:focus, .field textarea:focus { border-color: rgba(255,255,255,0.4); }
+  .field textarea { resize: vertical; min-height: 78px; }
+  .field select {
+    background: var(--panel-2); border: 1px solid var(--line); color: #fff;
+    font-size: 13px; padding: 10px 12px; border-radius: 9px; outline: none; cursor: pointer;
+  }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  /* image field */
+  .imgfield { display: flex; gap: 14px; align-items: flex-start; }
+  .imgfield .imgcol { flex: 1; min-width: 0; }
+  .thumb {
+    width: 92px; height: 116px; flex: none; border-radius: 9px; overflow: hidden;
+    background: var(--panel-2); border: 1px solid var(--line); position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .ph-fallback { font-size: 9px; letter-spacing: 0.12em; color: var(--faint); text-align: center; padding: 6px; }
+
+  .dropzone {
+    border: 1px dashed var(--faint); border-radius: 9px; background: var(--panel-2);
+    color: var(--muted); font-size: 12px; letter-spacing: 0.04em;
+    padding: 13px; text-align: center; cursor: pointer;
+    transition: border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+  }
+  .dropzone:hover { color: #fff; border-color: rgba(255,255,255,0.5); }
+  .dropzone.over { border-color: #fff; background: rgba(255,255,255,0.08); color: #fff; border-style: solid; }
+  .dropzone.busy { color: #fff; border-style: solid; opacity: 0.7; pointer-events: none; }
+
+  .rowtools { display: flex; gap: 6px; }
+  .icobtn {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 14px; transition: all .2s var(--ease);
+  }
+  .icobtn:hover { color: #fff; border-color: var(--faint); background: rgba(255,255,255,0.05); }
+  .icobtn.del:hover { color: #fff; background: #e2576b; border-color: #e2576b; }
+  .icobtn:disabled { opacity: 0.28; cursor: not-allowed; }
+
+  .addbar { margin-top: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 8px 7px 14px; font-size: 13px;
+  }
+  .chip input { background: transparent; border: none; color: #fff; outline: none; width: 9ch; font-size: 13px; }
+  .chip .x { cursor: pointer; color: var(--faint); width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+  .chip .x:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #fff; color: #000; font-weight: 700; font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 13px 22px; border-radius: 999px;
+    opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; z-index: 60;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .range-row { display: flex; align-items: center; gap: 16px; }
+  .range-row input[type=range] { flex: 1; accent-color: #fff; }
+  .range-row .val { font-family: 'Michroma'; font-size: 18px; min-width: 3ch; text-align: right; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; }
+  .segbtn {
+    appearance: none; background: transparent; border: none; cursor: pointer;
+    color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: 0.06em;
+    padding: 9px 18px; border-radius: 999px; transition: background .2s var(--ease), color .2s var(--ease);
+  }
+  .segbtn:hover { color: #fff; }
+  .segbtn.on { background: #fff; color: #000; }
+
+  .hintnote { font-size: 11px; color: var(--faint); margin-top: 7px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<input type="file" id="importer" accept="application/json,.json" style="display:none" />
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect } = React;
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+function Mark() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+      <circle cx="15" cy="15" r="14" stroke="#fff" strokeWidth="1.1" opacity="0.55" />
+      <circle cx="15" cy="15" r="7.5" stroke="#fff" strokeWidth="1.1" />
+      <circle cx="15" cy="15" r="1.7" fill="#fff" />
+    </svg>
+  );
+}
+
+/* ---------- field primitives ---------- */
+function Text({ label, value, onChange, placeholder }) {
+  return (
+    <div className="field">
+      {label ? <label>{label}</label> : null}
+      <input type="text" value={value || ''} placeholder={placeholder || ''} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+function Area({ label, value, onChange }) {
+  return (
+    <div className="field">
+      {label ? <label>{label}</label> : null}
+      <textarea value={value || ''} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+function Select({ label, value, options, onChange }) {
+  return (
+    <div className="field">
+      {label ? <label>{label}</label> : null}
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+function Thumb({ src }) {
+  const [ok, setOk] = useState(true);
+  useEffect(() => { setOk(true); }, [src]);
+  return (
+    <div className="thumb">
+      {src && ok
+        ? <img src={src} alt="" onError={() => setOk(false)} />
+        : <span className="ph-fallback">няма<br/>изображение</span>}
+    </div>
+  );
+}
+function ImageField({ label, value, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const [drag, setDrag] = useState(false);
+  const fid = useRef('f' + Math.random().toString(36).slice(2));
+
+  const handleFile = (file) => {
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { setErr('Само изображения (jpg, png, webp…)'); return; }
+    setErr(''); setBusy(true);
+    window.SK_STORE.uploadImage(file)
+      .then((url) => { onChange(url); setBusy(false); })
+      .catch((e) => { setErr(e.message || 'Грешка при качване'); setBusy(false); });
+  };
+
+  return (
+    <div className="field">
+      {label ? <label>{label}</label> : null}
+      <div className="imgfield">
+        <Thumb src={value} />
+        <div className="imgcol">
+          <div
+            className={`dropzone ${drag ? 'over' : ''} ${busy ? 'busy' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+            onDragLeave={() => setDrag(false)}
+            onDrop={(e) => { e.preventDefault(); setDrag(false); handleFile(e.dataTransfer.files[0]); }}
+            onClick={() => document.getElementById(fid.current).click()}
+          >
+            {busy ? 'Качване…' : (drag ? 'Пусни снимката тук' : '↥ Пусни снимка от компютъра или кликни за избор')}
+          </div>
+          <input id={fid.current} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={(e) => { handleFile(e.target.files[0]); e.target.value = ''; }} />
+          <input type="text" value={value || ''} placeholder="…или постави URL" onChange={(e) => onChange(e.target.value)} style={{ marginTop: 8 }} />
+          {err
+            ? <div className="hintnote" style={{ color: '#e2576b' }}>{err}</div>
+            : <div className="hintnote">Големите снимки се смаляват автоматично за демото. В Supabase режим отиват в Storage.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* row reorder / delete tools */
+function RowTools({ i, n, onMove, onDel }) {
+  return (
+    <div className="rowtools">
+      <button className="icobtn" title="Нагоре" disabled={i === 0} onClick={() => onMove(i, -1)}>↑</button>
+      <button className="icobtn" title="Надолу" disabled={i === n - 1} onClick={() => onMove(i, 1)}>↓</button>
+      <button className="icobtn del" title="Изтрий" onClick={() => onDel(i)}>✕</button>
+    </div>
+  );
+}
+
+const SPANS = ['span-3','span-4','span-5','span-6','span-7'].map((v) => ({ value: v, label: v.replace('span-', 'ширина ') }));
+const ARS = [
+  { value: 'ar-tall', label: 'висок 3:4.4' },
+  { value: 'ar-port', label: 'портрет 3:4' },
+  { value: 'ar-sq',   label: 'квадрат 1:1' },
+  { value: 'ar-land', label: 'пейзаж 4:3' },
+];
+const SHAPES = [
+  { value: '', label: 'портрет' },
+  { value: 'land', label: 'пейзаж' },
+];
+
+const MENU = [
+  ['hero', 'Hero'],
+  ['manifest', 'Манифест'],
+  ['collections', 'Колекции'],
+  ['catalog', 'Каталог'],
+  ['materials', 'Материали'],
+  ['accent', 'Акцент'],
+  ['testimonials', 'Отзиви'],
+  ['lookbook', 'Lookbook'],
+  ['footer', 'Footer'],
+  ['settings', 'Настройки'],
+  ['connection', 'Връзка / Backend'],
+];
+
+/* ============================================================ */
+function Admin() {
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem('sk_admin_ok') === '1');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState(false);
+
+  const [content, setContent] = useState(() => window.SK_CONTENT());
+  const [saved, setSaved] = useState(() => JSON.stringify(window.SK_CONTENT()));
+  const [section, setSection] = useState('hero');
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef(null);
+
+  const dirty = JSON.stringify(content) !== saved;
+
+  // In Supabase mode, hydrate from the backend once unlocked (local stays instant)
+  useEffect(() => {
+    if (!unlocked) return;
+    if (window.SK_STORE.adapterName !== 'supabase') return;
+    window.SK_STORE.load()
+      .then((o) => { if (o && typeof o === 'object') { o.__v = window.SK_VERSION; setContent(o); setSaved(JSON.stringify(o)); } })
+      .catch(() => {});
+  }, [unlocked]);
+
+  const set = (fn) => setContent((prev) => { const next = clone(prev); fn(next); return next; });
+  const flash = (msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 2200);
+  };
+
+  // array helpers
+  const move = (arr, i, dir) => { const j = i + dir; if (j < 0 || j >= arr.length) return; const t = arr[i]; arr[i] = arr[j]; arr[j] = t; };
+
+  const tryUnlock = (e) => {
+    e && e.preventDefault();
+    if (pw === 'silver2026') { sessionStorage.setItem('sk_admin_ok', '1'); setUnlocked(true); setErr(false); }
+    else { setErr(true); setTimeout(() => setErr(false), 500); }
+  };
+
+  const doSave = () => {
+    window.SK_STORE.save(content)
+      .then(() => { setSaved(JSON.stringify(content)); flash(window.SK_STORE.adapterName === 'supabase' ? 'Запазено в Supabase ✓' : 'Запазено ✓'); })
+      .catch((e) => flash('Грешка: ' + (e.message || 'неуспешен запис')));
+  };
+  const doReset = () => {
+    if (!window.confirm('Да върна ли цялото съдържание към фабричните стойности? Незапазените промени ще се загубят.')) return;
+    window.SK_STORE.reset()
+      .then(() => { const d = window.SK_CLONE(window.SK_DEFAULT); setContent(d); setSaved(JSON.stringify(d)); flash('Върнато по подразбиране'); })
+      .catch((e) => flash('Грешка: ' + (e.message || '')));
+  };
+  const doExport = () => {
+    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'content.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    flash('content.json свален');
+  };
+  const doImport = () => {
+    const inp = document.getElementById('importer');
+    inp.onchange = () => {
+      const file = inp.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try { const o = JSON.parse(r.result); if (!o || typeof o !== 'object') throw 0; o.__v = window.SK_VERSION; setContent(o); flash('JSON импортиран — не забравяй Запази'); }
+        catch (e) { flash('Невалиден JSON файл'); }
+        inp.value = '';
+      };
+      r.readAsText(file);
+    };
+    inp.click();
+  };
+
+  if (!unlocked) {
+    return (
+      <div className={`gate ${err ? 'err' : ''}`}>
+        <div className="gate-box">
+          <div className="gate-mark"><Mark /></div>
+          <h1>Silver Kiss</h1>
+          <div className="sub">Админ панел</div>
+          <form onSubmit={tryUnlock}>
+            <input type="password" autoFocus placeholder="ПАРОЛА" value={pw} onChange={(e) => setPw(e.target.value)} />
+            <button className="btn solid" type="submit" style={{ marginTop: 26, width: '100%' }}>Вход</button>
+          </form>
+          <div className="hint">Демо парола: <b>silver2026</b></div>
+        </div>
+      </div>
+    );
+  }
+
+  const c = content;
+  const sectionTitle = (MENU.find((m) => m[0] === section) || ['', ''])[1];
+
+  return (
+    <div className="shell">
+      <aside className="side">
+        <div className="side-head">
+          <div className="side-brand">
+            <Mark />
+            <div>
+              <div className="nm">{c.brand.name}</div>
+              <div className="tg">Админ панел</div>
+            </div>
+          </div>
+        </div>
+        <nav className="menu">
+          {MENU.map(([key, label]) => (
+            <button key={key} className={section === key ? 'active' : ''} onClick={() => setSection(key)}>
+              <span className="dot"></span>{label}
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <a className="btn ghost" href="Silver Kiss.html" target="_blank" rel="noopener" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>Виж сайта ↗</a>
+        </div>
+      </aside>
+
+      <div className="main">
+        <div className="topbar">
+          <div className="ttl">{sectionTitle}{dirty ? <span className="dirty">● незапазено</span> : null}</div>
+          <div className="actions">
+            <button className="btn ghost sm" onClick={doImport}>Импортирай</button>
+            <button className="btn ghost sm" onClick={doExport}>Експортирай JSON</button>
+            <button className="btn danger sm" onClick={doReset}>По подразбиране</button>
+            <button className="btn solid" onClick={doSave}>Запази</button>
+          </div>
+        </div>
+
+        <div className="body">
+          {section === 'hero' && <HeroPanel c={c} set={set} />}
+          {section === 'manifest' && <ManifestPanel c={c} set={set} />}
+          {section === 'collections' && <CollectionsPanel c={c} set={set} move={move} />}
+          {section === 'catalog' && <CatalogPanel c={c} set={set} move={move} />}
+          {section === 'materials' && <MaterialsPanel c={c} set={set} move={move} />}
+          {section === 'accent' && <AccentPanel c={c} set={set} />}
+          {section === 'testimonials' && <TestiPanel c={c} set={set} move={move} />}
+          {section === 'lookbook' && <LookbookPanel c={c} set={set} move={move} />}
+          {section === 'footer' && <FooterPanel c={c} set={set} move={move} />}
+          {section === 'settings' && <SettingsPanel c={c} set={set} move={move} />}
+          {section === 'connection' && <ConnectionPanel />}
+        </div>
+      </div>
+
+      <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>
+    </div>
+  );
+}
+
+/* ---------------- panels ---------------- */
+function HeroPanel({ c, set }) {
+  return (
+    <div>
+      <p className="lead">Голямото заглавие, подсказката и двете изображения на hero-то (базово + разкриващо). Изображенията се сменят със смяна на URL-а — препоръчват се еднакво кадрирани снимки на черен фон.</p>
+      <div className="card">
+        <Text label="Голямо заглавие (SILVER KISS)" value={c.hero.title} onChange={(v) => set((d) => { d.hero.title = v; })} />
+        <Text label="Подсказка за скрол" value={c.hero.hint} onChange={(v) => set((d) => { d.hero.hint = v; })} />
+      </div>
+      <div className="card">
+        <div className="grid2">
+          <ImageField label="Базово изображение (преди)" value={c.hero.baseImg} onChange={(v) => set((d) => { d.hero.baseImg = v; })} />
+          <ImageField label="Разкриващо изображение (след)" value={c.hero.revealImg} onChange={(v) => set((d) => { d.hero.revealImg = v; })} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ManifestPanel({ c, set }) {
+  return (
+    <div>
+      <p className="lead">Чисто типографската секция. Думите на цитата се проявяват една по една при скрол.</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.manifest.kicker} onChange={(v) => set((d) => { d.manifest.kicker = v; })} />
+        <Area label="Цитат" value={c.manifest.quote} onChange={(v) => set((d) => { d.manifest.quote = v; })} />
+        <Area label="Подтекст" value={c.manifest.sub} onChange={(v) => set((d) => { d.manifest.sub = v; })} />
+      </div>
+    </div>
+  );
+}
+
+function CollectionsPanel({ c, set, move }) {
+  const items = c.collections.items;
+  return (
+    <div>
+      <p className="lead">Големите редове с колекции. При hover вдясно изплува снимката.</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.collections.kicker} onChange={(v) => set((d) => { d.collections.kicker = v; })} />
+      </div>
+      {items.map((it, i) => (
+        <div className="card" key={i}>
+          <div className="card-h">
+            <div><span className="ix">{String(i + 1).padStart(2, '0')}</span> &nbsp; <span className="nm">{it.name}</span></div>
+            <RowTools i={i} n={items.length} onMove={(idx, dir) => set((d) => move(d.collections.items, idx, dir))} onDel={(idx) => set((d) => d.collections.items.splice(idx, 1))} />
+          </div>
+          <div className="grid2">
+            <Text label="Име" value={it.name} onChange={(v) => set((d) => { d.collections.items[i].name = v; })} />
+            <Text label="Брой / мета" value={it.meta} onChange={(v) => set((d) => { d.collections.items[i].meta = v; })} />
+          </div>
+          <ImageField label="Снимка при hover" value={it.img} onChange={(v) => set((d) => { d.collections.items[i].img = v; })} />
+        </div>
+      ))}
+      <div className="addbar">
+        <button className="btn" onClick={() => set((d) => d.collections.items.push({ name: 'Нова колекция', meta: '0 модела', img: '' }))}>+ Добави колекция</button>
+      </div>
+    </div>
+  );
+}
+
+function CatalogPanel({ c, set, move }) {
+  const prods = c.catalog.products;
+  const filters = c.catalog.filters;
+  return (
+    <div>
+      <p className="lead">Продуктите в каталога и филтрите (само визуални). Всяка карта има име, цена, материал, изображение и оформление.</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.catalog.kicker} onChange={(v) => set((d) => { d.catalog.kicker = v; })} />
+        <Text label="Текст на бутона (CTA)" value={c.catalog.cta} onChange={(v) => set((d) => { d.catalog.cta = v; })} />
+        <div className="field">
+          <label>Филтри (само визуални)</label>
+          <div className="chips">
+            {filters.map((f, i) => (
+              <span className="chip" key={i}>
+                <input type="text" value={f} onChange={(e) => set((d) => { d.catalog.filters[i] = e.target.value; })} />
+                <span className="x" onClick={() => set((d) => d.catalog.filters.splice(i, 1))}>✕</span>
+              </span>
+            ))}
+            <button className="btn ghost sm" onClick={() => set((d) => d.catalog.filters.push('Нов'))}>+ Филтър</button>
+          </div>
+        </div>
+      </div>
+
+      {prods.map((p, i) => (
+        <div className="card" key={i}>
+          <div className="card-h">
+            <div><span className="ix">{String(i + 1).padStart(2, '0')}</span> &nbsp; <span className="nm">{p.name}</span></div>
+            <RowTools i={i} n={prods.length} onMove={(idx, dir) => set((d) => move(d.catalog.products, idx, dir))} onDel={(idx) => set((d) => d.catalog.products.splice(idx, 1))} />
+          </div>
+          <div className="imgfield" style={{ marginBottom: 16 }}>
+            <Thumb src={p.img} />
+            <div className="imgcol">
+              <div className="grid2">
+                <Text label="Име" value={p.name} onChange={(v) => set((d) => { d.catalog.products[i].name = v; })} />
+                <Text label="Цена" value={p.price} onChange={(v) => set((d) => { d.catalog.products[i].price = v; })} />
+              </div>
+              <Text label="Материал (етикет)" value={p.mat} onChange={(v) => set((d) => { d.catalog.products[i].mat = v; })} />
+            </div>
+          </div>
+          <Text label="URL на снимка" value={p.img} onChange={(v) => set((d) => { d.catalog.products[i].img = v; })} />
+          <div className="grid2">
+            <Select label="Ширина в мрежата" value={p.span} options={SPANS} onChange={(v) => set((d) => { d.catalog.products[i].span = v; })} />
+            <Select label="Пропорция" value={p.ar} options={ARS} onChange={(v) => set((d) => { d.catalog.products[i].ar = v; })} />
+          </div>
+        </div>
+      ))}
+      <div className="addbar">
+        <button className="btn" onClick={() => set((d) => d.catalog.products.push({ name: 'Нов продукт', price: '0 €', mat: 'Сребро 925', span: 'span-4', ar: 'ar-port', img: '' }))}>+ Добави продукт</button>
+      </div>
+    </div>
+  );
+}
+
+function MaterialsPanel({ c, set, move }) {
+  const items = c.materials.items;
+  return (
+    <div>
+      <p className="lead">Разказът за материалите. Числото се превърта при влизане в кадър (напр. 925, 0.5).</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.materials.kicker} onChange={(v) => set((d) => { d.materials.kicker = v; })} />
+      </div>
+      {items.map((m, i) => (
+        <div className="card" key={i}>
+          <div className="card-h">
+            <div><span className="ix">{String(i + 1).padStart(2, '0')}</span> &nbsp; <span className="nm">{m.name}</span></div>
+            <RowTools i={i} n={items.length} onMove={(idx, dir) => set((d) => move(d.materials.items, idx, dir))} onDel={(idx) => set((d) => d.materials.items.splice(idx, 1))} />
+          </div>
+          <div className="grid3">
+            <Text label="Заглавие" value={m.name} onChange={(v) => set((d) => { d.materials.items[i].name = v; })} />
+            <Text label="Число (напр. 925)" value={m.stat} onChange={(v) => set((d) => { d.materials.items[i].stat = v; })} />
+            <Text label="Единица (‰, ct…)" value={m.unit} onChange={(v) => set((d) => { d.materials.items[i].unit = v; })} />
+          </div>
+          <Area label="Текст" value={m.body} onChange={(v) => set((d) => { d.materials.items[i].body = v; })} />
+          <ImageField label="Макро снимка" value={m.img} onChange={(v) => set((d) => { d.materials.items[i].img = v; })} />
+        </div>
+      ))}
+      <div className="addbar">
+        <button className="btn" onClick={() => set((d) => d.materials.items.push({ name: 'Нов материал', stat: '100', unit: '%', img: '', body: 'Описание…' }))}>+ Добави материал</button>
+      </div>
+    </div>
+  );
+}
+
+function AccentPanel({ c, set }) {
+  return (
+    <div>
+      <p className="lead">Акцентната секция на цял екран — едно бижу, което се върти бавно, и голямото му име.</p>
+      <div className="card">
+        <Text label="Надпис отгоре" value={c.accent.sub} onChange={(v) => set((d) => { d.accent.sub = v; })} />
+        <Text label="Име (edge-to-edge)" value={c.accent.name} onChange={(v) => set((d) => { d.accent.name = v; })} />
+        <Text label="Текст на бутона" value={c.accent.button} onChange={(v) => set((d) => { d.accent.button = v; })} />
+        <ImageField label="Снимка на бижуто" value={c.accent.img} onChange={(v) => set((d) => { d.accent.img = v; })} />
+      </div>
+    </div>
+  );
+}
+
+function TestiPanel({ c, set, move }) {
+  const items = c.testimonials.items;
+  return (
+    <div>
+      <p className="lead">Ротиращите се отзиви на клиенти.</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.testimonials.kicker} onChange={(v) => set((d) => { d.testimonials.kicker = v; })} />
+      </div>
+      {items.map((t, i) => (
+        <div className="card" key={i}>
+          <div className="card-h">
+            <div><span className="ix">{String(i + 1).padStart(2, '0')}</span></div>
+            <RowTools i={i} n={items.length} onMove={(idx, dir) => set((d) => move(d.testimonials.items, idx, dir))} onDel={(idx) => set((d) => d.testimonials.items.splice(idx, 1))} />
+          </div>
+          <Area label="Цитат" value={t.q} onChange={(v) => set((d) => { d.testimonials.items[i].q = v; })} />
+          <Text label="Автор" value={t.a} onChange={(v) => set((d) => { d.testimonials.items[i].a = v; })} />
+        </div>
+      ))}
+      <div className="addbar">
+        <button className="btn" onClick={() => set((d) => d.testimonials.items.push({ q: 'Нов отзив…', a: 'Име' }))}>+ Добави отзив</button>
+      </div>
+    </div>
+  );
+}
+
+function LookbookPanel({ c, set, move }) {
+  const items = c.lookbook.items;
+  return (
+    <div>
+      <p className="lead">Безкрайната лента от lifestyle кадри.</p>
+      <div className="card">
+        <Text label="Надпис (kicker)" value={c.lookbook.kicker} onChange={(v) => set((d) => { d.lookbook.kicker = v; })} />
+      </div>
+      {items.map((it, i) => (
+        <div className="card" key={i}>
+          <div className="card-h">
+            <div><span className="ix">{String(i + 1).padStart(2, '0')}</span> &nbsp; <span className="nm">{it.label}</span></div>
+            <RowTools i={i} n={items.length} onMove={(idx, dir) => set((d) => move(d.lookbook.items, idx, dir))} onDel={(idx) => set((d) => d.lookbook.items.splice(idx, 1))} />
+          </div>
+          <div className="grid2">
+            <Text label="Етикет" value={it.label} onChange={(v) => set((d) => { d.lookbook.items[i].label = v; })} />
+            <Select label="Формат" value={it.shape} options={SHAPES} onChange={(v) => set((d) => { d.lookbook.items[i].shape = v; })} />
+          </div>
+          <ImageField label="Снимка" value={it.img} onChange={(v) => set((d) => { d.lookbook.items[i].img = v; })} />
+        </div>
+      ))}
+      <div className="addbar">
+        <button className="btn" onClick={() => set((d) => d.lookbook.items.push({ label: 'Нов кадър', shape: '', img: '' }))}>+ Добави кадър</button>
+      </div>
+    </div>
+  );
+}
+
+function FooterPanel({ c, set, move }) {
+  const f = c.footer;
+  return (
+    <div>
+      <p className="lead">Слоганът, нюзлетърът, линковете и долният ред с кредит.</p>
+      <div className="card">
+        <Text label="Слоган" value={f.slogan} onChange={(v) => set((d) => { d.footer.slogan = v; })} />
+        <div className="grid3">
+          <Text label="Етикет нюзлетър" value={f.newsLabel} onChange={(v) => set((d) => { d.footer.newsLabel = v; })} />
+          <Text label="Плейсхолдър поле" value={f.newsPlaceholder} onChange={(v) => set((d) => { d.footer.newsPlaceholder = v; })} />
+          <Text label="Бутон нюзлетър" value={f.newsButton} onChange={(v) => set((d) => { d.footer.newsButton = v; })} />
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-h"><span className="nm">Линкове</span></div>
+        {f.links.map((l, i) => (
+          <div className="grid2" key={i} style={{ alignItems: 'end', marginBottom: 10 }}>
+            <Text label={i === 0 ? 'Текст' : ''} value={l.label} onChange={(v) => set((d) => { d.footer.links[i].label = v; })} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'end' }}>
+              <div style={{ flex: 1 }}><Text label={i === 0 ? 'Адрес (href)' : ''} value={l.href} onChange={(v) => set((d) => { d.footer.links[i].href = v; })} /></div>
+              <button className="icobtn del" style={{ marginBottom: 16 }} onClick={() => set((d) => d.footer.links.splice(i, 1))}>✕</button>
+            </div>
+          </div>
+        ))}
+        <button className="btn ghost sm" onClick={() => set((d) => d.footer.links.push({ label: 'Нов линк', href: '#' }))}>+ Линк</button>
+      </div>
+      <div className="card">
+        <div className="card-h"><span className="nm">Долен ред</span></div>
+        <Text label="Копирайт ред" value={f.copy} onChange={(v) => set((d) => { d.footer.copy = v; })} />
+        <div className="grid2">
+          <Text label="Кредит текст" value={f.credit.text} onChange={(v) => set((d) => { d.footer.credit.text = v; })} />
+          <Text label="Кредит линк" value={f.credit.href} onChange={(v) => set((d) => { d.footer.credit.href = v; })} />
+        </div>
+        <Text label="Воден знак" value={f.watermark} onChange={(v) => set((d) => { d.footer.watermark = v; })} />
+      </div>
+    </div>
+  );
+}
+
+function SettingsPanel({ c, set, move }) {
+  return (
+    <div>
+      <p className="lead">Марка, навигация и силата на разкриващия преход (FEATHER) на hero-то.</p>
+      <div className="card">
+        <div className="card-h"><span className="nm">Марка</span></div>
+        <div className="grid2">
+          <Text label="Име на марката" value={c.brand.name} onChange={(v) => set((d) => { d.brand.name = v; })} />
+          <Text label="Подзаглавие (таглайн)" value={c.brand.tag} onChange={(v) => set((d) => { d.brand.tag = v; })} />
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-h"><span className="nm">Навигация</span></div>
+        <div className="chips">
+          {c.nav.map((n, i) => (
+            <span className="chip" key={i}>
+              <input type="text" value={n} onChange={(e) => set((d) => { d.nav[i] = e.target.value; })} />
+              <span className="x" onClick={() => set((d) => d.nav.splice(i, 1))}>✕</span>
+            </span>
+          ))}
+          <button className="btn ghost sm" onClick={() => set((d) => d.nav.push('Ново'))}>+ Бутон</button>
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-h"><span className="nm">FEATHER — мекота на разкриващия ръб</span></div>
+        <div className="range-row">
+          <input type="range" min="0" max="40" step="1" value={c.hero.feather} onChange={(e) => set((d) => { d.hero.feather = parseInt(e.target.value, 10); })} />
+          <span className="val">{c.hero.feather}</span>
+        </div>
+        <div className="hintnote">0 = твърд ръб на разкриването, 18 = меко светещо преливане. Влияе на hero прехода.</div>
+      </div>
+    </div>
+  );
+}
+
+function ConnectionPanel() {
+  const [conn, setConnState] = useState(() => window.SK_STORE.conn);
+  const [test, setTest] = useState('');
+  const upd = (patch) => { const c = window.SK_STORE.setConn(patch); setConnState(Object.assign({}, c)); };
+
+  const isSupa = conn.adapter === 'supabase';
+
+  const runTest = () => {
+    setTest('Тествам…');
+    window.SK_STORE.load()
+      .then((o) => setTest(o && typeof o === 'object' ? '✓ Връзката работи — съдържанието е заредено.' : '⚠ Връзката отговори, но без данни (празна таблица?).'))
+      .catch((e) => setTest('✗ Неуспех: ' + (e.message || 'проверете URL и ключа')));
+  };
+
+  return (
+    <div>
+      <p className="lead">
+        Това определя <b>къде</b> се пазят промените. По подразбиране е <b>Локално</b> (в браузъра — идеално за демо).
+        За продукция превключи на <b>Supabase</b> и попълни данните по-долу. Точната настройка на таблицата,
+        bucket-а и политиките е описана във файла <b>BACKEND.md</b>.
+      </p>
+
+      <div className="card">
+        <div className="card-h"><span className="nm">Източник на данни</span></div>
+        <div className="seg">
+          <button className={`segbtn ${!isSupa ? 'on' : ''}`} onClick={() => upd({ adapter: 'local' })}>Локално (демо)</button>
+          <button className={`segbtn ${isSupa ? 'on' : ''}`} onClick={() => upd({ adapter: 'supabase' })}>Supabase</button>
+        </div>
+        <div className="hintnote" style={{ marginTop: 12 }}>
+          Активен адаптер: <b style={{ color: '#fff' }}>{conn.adapter}</b>. Кодът на адаптера е готов — щом попълниш ключовете и направиш таблицата по BACKEND.md, всичко тръгва без други промени.
+        </div>
+      </div>
+
+      <div className="card" style={{ opacity: isSupa ? 1 : 0.5, pointerEvents: isSupa ? 'auto' : 'none' }}>
+        <div className="card-h"><span className="nm">Supabase настройки</span></div>
+        <Text label="Project URL" value={conn.url} onChange={(v) => upd({ url: v.replace(/\/+$/, '') })} />
+        <Area label="Anon public key" value={conn.anonKey} onChange={(v) => upd({ anonKey: v.trim() })} />
+        <div className="grid2">
+          <Text label="Таблица (jsonb)" value={conn.table} onChange={(v) => upd({ table: v })} />
+          <Text label="Storage bucket" value={conn.bucket} onChange={(v) => upd({ bucket: v })} />
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
+          <button className="btn" onClick={runTest}>Тествай връзката</button>
+          {test ? <span className="hintnote" style={{ margin: 0 }}>{test}</span> : null}
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-h"><span className="nm">Бележки</span></div>
+        <div className="hintnote" style={{ lineHeight: 1.7 }}>
+          • Anon ключът е публичен по дизайн — сигурността идва от <b>RLS политиките</b> (описани в BACKEND.md), не от криенето на ключа.<br/>
+          • Записът на съдържанието изисква вписан потребител (Supabase Auth). За пълна продукция замени демо паролата с Supabase Auth — стъпките са в BACKEND.md.<br/>
+          • Качените снимки в Supabase режим отиват в Storage bucket-а и сайтът ползва техните публични URL-и.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Admin />);
+</script>
+</body>
+</html>
