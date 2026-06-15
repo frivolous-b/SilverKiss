@@ -3,7 +3,7 @@
 const { useRef, useEffect } = React;
 
 const WHEEL_FACTOR = 0.0006;
-const TOUCH_FACTOR = 0.0015;
+const TOUCH_FACTOR = 0.0032;
 const LERP = 0.08;
 const PARALLAX = 40;           // px, ±
 

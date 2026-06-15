@@ -241,6 +241,10 @@ h1.hero-title .space { display: inline-block; width: 0.18em; }
 }
 @media (max-width: 720px) {
   .nav { display: none; }
+  /* mobile scroll hint: discreet but clearly visible */
+  .hint { gap: 14px; top: 58%; }
+  .hint-label { font-size: 15px; letter-spacing: 0.2em; }
+  .hint-track { height: 66px; }
 }
 
 .hint {
